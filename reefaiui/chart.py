@@ -59,7 +59,7 @@ html = Template('''\
 
   function get_data() {
     $.ajax({
-        url: 'http://reefai.stevebriskin.com:8085/data',
+        url: '/data',
         type: 'GET',
         dataType: 'json',
         success: on_data
