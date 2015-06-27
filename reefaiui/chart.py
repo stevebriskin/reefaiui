@@ -115,6 +115,16 @@ html = Template('''\
   }
 
   $(function() {
+    $("<div id='tooltip'></div>").css({
+      position: "absolute",
+      display: "none",
+      border: "1px solid #fdd",
+      padding: "2px",
+      "background-color": "#fee",
+      opacity: 0.80
+    }).appendTo("body");
+
+
     combinedchart = $.plot("#combinedchart", [], 
       {xaxis: {mode: "time"},
        yaxes: [{ labelWidth: 40,
@@ -128,7 +138,8 @@ html = Template('''\
               ],
       grid: {hoverable: true, autoHighlight: true },
       selection:{mode:"x"}
-      });
+    });
+    $("#combinedchart").bind("plothover", detailhover);
 
     phchart = $.plot("#phchart", [], 
       {xaxis: {mode: "time"},
@@ -140,6 +151,7 @@ html = Template('''\
       grid: {hoverable: true, autoHighlight: true },
       selection:{mode:"x"}
     });
+    $("#phchart").bind("plothover", detailhover);
 
     tempchart = $.plot("#tempchart", [], 
       {xaxis: {mode: "time"},
@@ -151,9 +163,23 @@ html = Template('''\
       grid: {hoverable: true, autoHighlight: true },
       selection:{mode:"x"}
     });
+    $("#tempchart").bind("plothover", detailhover);
 
     get_data();
   });
+
+  function detailhover(event, pos, item) {
+      if (item) {
+        var x = item.datapoint[0],
+            y = item.datapoint[1].toFixed(2);
+
+        $("#tooltip").html(item.series.label + " at " + new Date(x) + ": " + y)
+          .css({top: item.pageY+5, left: item.pageX+5})
+          .fadeIn(200);
+      } else {
+        $("#tooltip").hide();
+      }
+  }
 
     </script>
 </html>
