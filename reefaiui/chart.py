@@ -59,7 +59,7 @@ html = Template('''\
 
   function get_data() {
     $.ajax({
-        url: 'http://52.6.134.15:8085/data',
+        url: 'http://reefai.stevebriskin.com:8085/data',
         type: 'GET',
         dataType: 'json',
         success: on_data
@@ -80,7 +80,7 @@ html = Template('''\
     $('#latesttemp').text(data.latesttemp);
     $('#latestts').text(data.latestts);
 
-    setTimeout(get_data, 5000);
+    setTimeout(get_data, 120000);
   }
 
   $(function() {
