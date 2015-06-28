@@ -68,6 +68,10 @@ html = Template('''\
 
       <label class="label label-default">Temp</label>
       <div id="phchart" class="chart"></div>
+
+      <label class="label label-default">Outlet 1</label>
+      <div id="outlet1chart" class="chart"></div>
+
     </div>
   </body>
   <script
@@ -84,6 +88,7 @@ html = Template('''\
   var tempchart;
   var phchart;
   var combinedchart;
+  var outlet1chart;
 
   function get_data() {
     $.ajax({
@@ -117,14 +122,22 @@ html = Template('''\
     tempchart.setupGrid();
     tempchart.draw();
 
+    outlet1chart.setData([
+      {label: 'Outlet1', data: data.outlet1, color: 'green'}, 
+    ]);
+
+    outlet1chart.setupGrid();
+    outlet1chart.draw();
+
+
     $('#latestph').text(data.latestph);
     $('#latesttemp').text(data.latesttemp);
     $('#latestts').text(data.latestts);
 
-    setoutlet('#outlet1', data.outlet1);
-    setoutlet('#outlet2', data.outlet2);
-    setoutlet('#outlet3', data.outlet3);
-    setoutlet('#outlet4', data.outlet4);
+    setoutlet('#outlet1', data.latestoutlet1);
+    setoutlet('#outlet2', data.latestoutlet2);
+    setoutlet('#outlet3', data.latestoutlet3);
+    setoutlet('#outlet4', data.latestoutlet4);
 
     setTimeout(get_data, 120000);
   }
@@ -180,6 +193,19 @@ html = Template('''\
     });
     $("#tempchart").bind("plothover", detailhover);
 
+    outlet1chart = $.plot("#outlet1chart", [], 
+      {xaxis: {mode: "time"},
+       yaxes: [{ labelWidth: 40,
+                  autoscaleMargin: 0.07,
+                  position: 'right'
+                },
+              ],
+      grid: {hoverable: true, autoHighlight: true },
+      selection:{mode:"x"}
+    });
+    $("#outlet1chart").bind("plothover", detailhover);
+
+
     get_data();
   });
 
@@ -228,8 +254,8 @@ def data():
     global mongo
 
     pipeline = [
-      {'$project' : {'time' : {'$dateToString' : {'format' : "%Y-%m-%dT%H:%M:00", 'date' : "$ts"}}, 'temp' : 1, 'ph' : 1}},
-      {'$group' : {'_id' : "$time", 'ph' : {'$avg' : "$ph"}, 'temp' : {'$avg' : "$temp"}}},
+      {'$project' : {'time' : {'$dateToString' : {'format' : "%Y-%m-%dT%H:%M:00", 'date' : "$ts"}}, 'temp' : 1, 'ph' : 1, 'outlet1' : 1}},
+      {'$group' : {'_id' : "$time", 'ph' : {'$avg' : "$ph"}, 'temp' : {'$avg' : "$temp"}, 'outlet1' : {'$avg' : "$outlet1"}}},
       {'$sort' : {'_id' : -1}},
       {'$limit' : 5000}
     ]
@@ -239,6 +265,7 @@ def data():
 
     parsedPh = [(int(datetime.strptime(row['_id'],'%Y-%m-%dT%H:%M:%S').strftime('%s')) * 1000 , row['ph']) for row in entries]
     parsedTemp = [(int(datetime.strptime(row['_id'],'%Y-%m-%dT%H:%M:%S').strftime('%s')) * 1000 , row['temp']) for row in entries]
+    parsedOutlet1 = [(int(datetime.strptime(row['_id'],'%Y-%m-%dT%H:%M:%S').strftime('%s')) * 1000 , row['outlet1']) for row in entries]
 
     latestReading = mongo['reef_ai']['readings'].find({}).sort('ts', DESCENDING).limit(1)[0]
 
@@ -246,12 +273,13 @@ def data():
 
     return jsonify(phvalues=parsedPh, 
                    tempvalues=parsedTemp, 
+                   outlet1=parsedOutlet1,
                    latestph=format(latestReading['ph'], '.1f'), 
                    latesttemp=format(latestReading['temp'], '.1f'),
-                   outlet1=latestReading['outlet1'],
-                   outlet2=latestReading['outlet2'],
-                   outlet3=latestReading['outlet3'],
-                   outlet4=latestReading['outlet4'],
+                   latestoutlet1=latestReading['outlet1'],
+                   latestoutlet2=latestReading['outlet2'],
+                   latestoutlet3=latestReading['outlet3'],
+                   latestoutlet4=latestReading['outlet4'],
                    latestts=latestReading['ts'].strftime('%Y-%m-%dT%H:%M:%S'))
 
 
