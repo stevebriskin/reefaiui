@@ -40,7 +40,17 @@ html = Template('''\
       <br>
       <label>Latest Temp</label> <label id="latesttemp" class="label label-primary"></label>
       <br>
+      <label>Outlet 1</label> <label id="outlet1" class="label"></label>
+      <br>
+      <label>Outlet 2</label> <label id="outlet2" class="label"></label>
+      <br>
+      <label>Outlet 3</label> <label id="outlet3" class="label"></label>
+      <br>
+      <label>Outlet 4</label> <label id="outlet4" class="label"></label>
+
+      <br>
       <label>Last Reading</label> <label id="latestts" class="label label-primary"></label>
+
     </div>
 
     <p>
@@ -111,6 +121,11 @@ html = Template('''\
     $('#latesttemp').text(data.latesttemp);
     $('#latestts').text(data.latestts);
 
+    setoutlet('#outlet1', data.outlet1);
+    setoutlet('#outlet2', data.outlet2);
+    setoutlet('#outlet3', data.outlet3);
+    setoutlet('#outlet4', data.outlet4);
+
     setTimeout(get_data, 120000);
   }
 
@@ -168,6 +183,16 @@ html = Template('''\
     get_data();
   });
 
+  function setoutlet(name, val) {
+    if (val > 0) {
+      $(name).addClass('label-warning');
+    } else {
+      $(name).addClass('label-success');
+    }
+    $(name).text(val);
+
+  }
+
   function detailhover(event, pos, item) {
       if (item) {
         var x = item.datapoint[0],
@@ -223,6 +248,10 @@ def data():
                    tempvalues=parsedTemp, 
                    latestph=format(latestReading['ph'], '.1f'), 
                    latesttemp=format(latestReading['temp'], '.1f'),
+                   outlet1=latestReading['outlet1'],
+                   outlet2=latestReading['outlet2'],
+                   outlet3=latestReading['outlet3'],
+                   outlet4=latestReading['outlet4'],
                    latestts=latestReading['ts'].strftime('%Y-%m-%dT%H:%M:%S'))
 
 
