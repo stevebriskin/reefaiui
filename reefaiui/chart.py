@@ -66,7 +66,7 @@ html = Template('''\
 
       <br>
 
-      <label class="label label-default">Temp</label>
+      <label class="label label-default">Ph</label>
       <div id="phchart" class="chart"></div>
 
       <label class="label label-default">Outlet 1</label>
