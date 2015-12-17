@@ -75,6 +75,12 @@ html = Template('''\
       <label class="label label-default">Outlet 2</label>
       <div id="outlet2chart" class="chart"></div>
 
+      <label class="label label-default">Outlet 3</label>
+      <div id="outlet3chart" class="chart"></div>
+
+      <label class="label label-default">Outlet 4</label>
+      <div id="outlet4chart" class="chart"></div>
+
     </div>
   </body>
   <script
@@ -93,6 +99,9 @@ html = Template('''\
   var combinedchart;
   var outlet1chart;
   var outlet2chart;
+  var outlet3chart;
+  var outlet4chart;
+
 
   function get_data() {
     $.ajax({
@@ -139,6 +148,20 @@ html = Template('''\
 
     outlet2chart.setupGrid();
     outlet2chart.draw();
+
+    outlet3chart.setData([
+      {label: 'Outlet3', data: data.outlet3, color: 'green'},
+    ]);
+
+    outlet3chart.setupGrid();
+    outlet3chart.draw();
+
+    outlet4chart.setData([
+      {label: 'Outlet4', data: data.outlet4, color: 'green'},
+    ]);
+
+    outlet4chart.setupGrid();
+    outlet4chart.draw();
 
     $('#latestph').text(data.latestph);
     $('#latesttemp').text(data.latesttemp);
@@ -228,6 +251,32 @@ html = Template('''\
     });
     $("#outlet2chart").bind("plothover", detailhover);
 
+
+    outlet3chart = $.plot("#outlet3chart", [],
+      {xaxis: {mode: "time"},
+       yaxes: [{ labelWidth: 40,
+                  autoscaleMargin: 0.07,
+                  position: 'right'
+                },
+              ],
+      grid: {hoverable: true, autoHighlight: true },
+      selection:{mode:"x"}
+    });
+    $("#outlet3chart").bind("plothover", detailhover);
+
+
+    outlet4chart = $.plot("#outlet4chart", [],
+      {xaxis: {mode: "time"},
+       yaxes: [{ labelWidth: 40,
+                  autoscaleMargin: 0.07,
+                  position: 'right'
+                },
+              ],
+      grid: {hoverable: true, autoHighlight: true },
+      selection:{mode:"x"}
+    });
+    $("#outlet4chart").bind("plothover", detailhover);
+
     get_data();
   });
 
@@ -276,10 +325,10 @@ def data():
     global mongo
 
     pipeline = [
-      {'$project' : {'time' : {'$dateToString' : {'format' : "%Y-%m-%dT%H:%M:00", 'date' : "$ts"}}, 'temp' : 1, 'ph' : 1, 'outlet1' : 1, 'outlet2' : 1}},
-      {'$group' : {'_id' : "$time", 'ph' : {'$avg' : "$ph"}, 'temp' : {'$avg' : "$temp"}, 'outlet1' : {'$avg' : "$outlet1"}, 'outlet2' : {'$avg' : "$outlet2"}}},
+      {'$project' : {'time' : {'$dateToString' : {'format' : "%Y-%m-%dT%H:%M:00", 'date' : "$ts"}}, 'temp' : 1, 'ph' : 1, 'outlet1' : 1, 'outlet2' : 1, 'outlet3' : 1, 'outlet4' : 1}},
+      {'$group' : {'_id' : "$time", 'ph' : {'$avg' : "$ph"}, 'temp' : {'$avg' : "$temp"}, 'outlet1' : {'$avg' : "$outlet1"}, 'outlet2' : {'$avg' : "$outlet2"}, 'outlet3' : {'$avg' : "$outlet3"}, 'outlet4' : {'$avg' : "$outlet4"}}},
       {'$sort' : {'_id' : -1}},
-      {'$limit' : 5000}
+      {'$limit' : 2000}
     ]
 
     entries = list(mongo['reef_ai']['readings'].aggregate(pipeline))
@@ -289,7 +338,8 @@ def data():
     parsedTemp = [(int(datetime.strptime(row['_id'],'%Y-%m-%dT%H:%M:%S').strftime('%s')) * 1000 , row['temp']) for row in entries]
     parsedOutlet1 = [(int(datetime.strptime(row['_id'],'%Y-%m-%dT%H:%M:%S').strftime('%s')) * 1000 , row['outlet1']) for row in entries]
     parsedOutlet2 = [(int(datetime.strptime(row['_id'],'%Y-%m-%dT%H:%M:%S').strftime('%s')) * 1000 , row['outlet2']) for row in entries]
-
+    parsedOutlet3 = [(int(datetime.strptime(row['_id'],'%Y-%m-%dT%H:%M:%S').strftime('%s')) * 1000 , row['outlet3']) for row in entries]
+    parsedOutlet4 = [(int(datetime.strptime(row['_id'],'%Y-%m-%dT%H:%M:%S').strftime('%s')) * 1000 , row['outlet4']) for row in entries]
     latestReading = mongo['reef_ai']['readings'].find({}).sort('ts', DESCENDING).limit(1)[0]
 
     #print latestReading
@@ -298,7 +348,9 @@ def data():
                    tempvalues=parsedTemp, 
                    outlet1=parsedOutlet1,
 		   outlet2=parsedOutlet2,
-                   latestph=format(latestReading['ph'], '.1f'), 
+		   outlet3=parsedOutlet3,
+                   outlet4=parsedOutlet4,
+                   latestph=format(latestReading['ph'], '.2f'), 
                    latesttemp=format(latestReading['temp'], '.1f'),
                    latestoutlet1=latestReading['outlet1'],
                    latestoutlet2=latestReading['outlet2'],
